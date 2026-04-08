@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Infinite Forest</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.cdnfonts.com/css/minecraftia" rel="stylesheet">
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
+        body { margin: 0; overflow: hidden; font-family: 'Minecraftia', sans-serif; background: #000; }
         #ui {
             position: absolute; top: 20px; left: 20px; color: white;
             background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px;
@@ -23,11 +24,7 @@
             font-weight: bold; border-radius: 6px; transition: all 0.2s;
         }
         .slot.active { border-color: #00ff00; background: rgba(0,255,0,0.2); transform: scale(1.1); }
-        #loading {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #111; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; color: #fff; z-index: 110;
-        }
+
         .controls-hint { font-size: 0.9em; color: #ffd700; margin-top: 10px; }
         #crosshair {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -37,13 +34,121 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 5; transition: background 3s ease;
         }
+        .background-image-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/key-art/MCV_SummerDrop_Hero_DotNet_Homepage_1920x1080.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: brightness(0.6) blur(2px); /* Dim and slightly blur the background */
+            z-index: -3; /* Place it furthest back */
+        }
+
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent black overlay */
+            z-index: -2; /* Place it between the image and logo */
+        }
+
+        /* Minecraft Logo styling in the background */
+        .minecraft-logo-bg {
+            position: absolute;
+            top: 5%; /* Position near the top */
+            left: 50%;
+            transform: translateX(-50%); /* Center horizontally */
+            width: 80%; /* Responsive width */
+            max-width: 400px; /* Max width for larger screens */
+            opacity: 0.8; /* Slightly transparent */
+            z-index: -1; /* Behind the main content, but above the overlay */
+            filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); /* Dark shadow for depth */
+        }
+
+        /* Keyframe animation for a subtle glow effect on the progress bar */
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px rgba(85, 255, 85, 0.5); }
+            50% { box-shadow: 0 0 15px rgba(85, 255, 85, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(85, 255, 85, 0.5); }
+        }
+
+        /* Custom text shadow for a pixelated outline effect */
+        .minecraft-text-shadow {
+            text-shadow:
+                -2px -2px 0 #000,
+                2px -2px 0 #000,
+                -2px 2px 0 #000,
+                2px 2px 0 #000;
+        }
+
+        /* Custom border for the main container to mimic Minecraft UI */
+        .minecraft-border {
+            border: 4px solid #555555; /* Dark gray border */
+            box-shadow:
+                inset 0 0 0 2px #222222, /* Inner dark shadow */
+                0 0 0 2px #AAAAAA; /* Outer light highlight */
+        }
+
+        /* Progress bar container styling for block textures */
+        .progress-bar-container {
+            background-color: #444444; /* Base dark color for empty part */
+            border: 2px solid #222222; /* Dark border */
+            box-shadow: inset 0 0 0 1px #666666; /* Inner highlight */
+            overflow: hidden; /* Ensure fill covers patterns */
+            position: relative; /* Needed for z-index of fill */
+
+            background-image:
+                linear-gradient(0deg, transparent 19px, rgba(0,0,0,0.3) 19px, rgba(0,0,0,0.3) 20px, transparent 20px),
+                linear-gradient(90deg, transparent 19px, rgba(0,0,0,0.3) 19px, rgba(0,0,0,0.3) 20px, transparent 20px);
+            background-size: 20px 20px;
+            background-position: 0 0;
+        }
+
+        /* Progress bar fill styling */
+        .progress-fill {
+            height: 100%;
+            background-color: #55AA55; /* Minecraft green */
+            background-image: linear-gradient(
+                90deg,
+                rgba(0,0,0,0.2) 2px, 
+                transparent 2px,
+                transparent 20px 
+            );
+            background-size: 20px 100%; 
+            animation: glow 2s infinite alternate;
+            transition: width 0.1s linear; /* Slightly snappier for high speed */
+            position: relative;
+            z-index: 1;
+        }
     </style>
 </head>
 <body>
 
     <div id="loading">
-        <h1>RESTORING UNIVERSE...</h1>
-        <p>Loading Mobs, Stars, Oceans and Mountains...</p>
+<div class="background-image-container"></div>
+    <div class="background-overlay"></div>
+
+    <img src="logo.png" class="minecraft-logo-bg">
+
+    <div class="flex flex-col items-center justify-center p-8 bg-gray-800 bg-opacity-80 rounded-lg shadow-xl max-w-lg w-11/12 md:w-3/4 lg:w-1/2 minecraft-border relative z-10">
+        <!-- Main loading status text -->
+        <p id="loadingStatusText" class="text-lg md:text-xl text-gray-300 text-center minecraft-text-shadow mb-4 leading-relaxed"></p>
+
+        <!-- Progress bar container -->
+        <div class="w-full h-4 mb-6 progress-bar-container">
+            <!-- Progress bar fill -->
+            <div id="progressBarFill" class="progress-fill" style="width: 0%;"></div>
+        </div>
+
+        <!-- Minecraft tips text -->
+        <p id="tipText" class="text-lg md:text-xl text-gray-300 text-center minecraft-text-shadow leading-relaxed"></p>
+    </div>
     </div>
 
     <div id="ambient-overlay"></div>
@@ -270,9 +375,9 @@ scene.fog = new THREE.Fog(0x87ceeb, 0, 120); // start=0, end=120 blocks
             const wz = cz * CHUNK_SIZE + z;
             const info = getTerrainInfo(wx, wz);
 
-maybeSpawnWell(wx, wz, info, data);
 maybeSpawnCaves(cx, cz, data);
 maybeSpawnOres(cx, cz, data);
+maybeSpawnWell(wx, wz, info, data);
 maybeSpawnBase(cx, cz, data);
 
             // ===== HEIGHT LOOP =====
@@ -405,7 +510,7 @@ function maybeSpawnOres(cx, cz, data) {
     });
 }
 function maybeSpawnBase(cx, cz, data) {
-    if (Math.random() > 0.0001) return; // 0.2% chance per chunk
+    if (Math.random() > 0.001) return; // 0.2% chance per chunk
 
     const roomSize = 20;
     const roomHeight = 10;
@@ -954,6 +1059,7 @@ function updateEnvironment() {
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
         document.addEventListener('contextmenu', e => e.preventDefault());
+
     </script>
 </body>
 </html>
