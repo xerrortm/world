@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InfiniteForest</title>
+    <title>Infinite Forest</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
@@ -110,8 +110,8 @@
         }
 
         // --- CONSTANTS ---
-        const CHUNK_SIZE = 16;
-        const VIEW_DISTANCE = 3; 
+        const CHUNK_SIZE = 30;
+        const VIEW_DISTANCE = 1; 
         const WORLD_HEIGHT = 128;
         const SEA_LEVEL = 18;
         const noise = new ImprovedNoise();
@@ -273,6 +273,7 @@ scene.fog = new THREE.Fog(0x87ceeb, 0, 120); // start=0, end=120 blocks
 maybeSpawnWell(wx, wz, info, data);
 maybeSpawnCaves(cx, cz, data);
 maybeSpawnOres(cx, cz, data);
+maybeSpawnBase(cx, cz, data);
 
             // ===== HEIGHT LOOP =====
             for (let y = 0; y < WORLD_HEIGHT; y++) {
@@ -303,7 +304,7 @@ maybeSpawnOres(cx, cz, data);
 function maybeSpawnWell(wx, wz, info, data) {
     if(info.temp === "LOW") return;
     if(info.biome === "OCEAN" || info.biome === "BEACH") return;
-    if(Math.random() > 0.0001) return; 
+    if(Math.random() > 0.0006) return; 
 
     const holeSize = 5; 
     const topY = info.height; 
@@ -336,7 +337,7 @@ function maybeSpawnWell(wx, wz, info, data) {
     }
 }
 function maybeSpawnCaves(cx, cz, data) {
-    if (Math.random() > 0.005) return; // 5% chance per chunk
+    if (Math.random() > 0.004) return; // 5% chance per chunk
 
     const caveCount = 1 + Math.floor(Math.random() * 2); // 1-2 caves per chunk
     for (let c = 0; c < caveCount; c++) {
@@ -397,12 +398,165 @@ function maybeSpawnOres(cx, cz, data) {
         if(y >= SEA_LEVEL) return; // only below sea level
 
         const chance = Math.random();
-        if(chance < 0.0003) {
+        if(chance < 0.0002) {
             // 50/50 chance gold or diamond
             data.set(posStr, Math.random() < 0.5 ? BLOCKS.GOLD : BLOCKS.DIAMOND);
         }
     });
 }
+function maybeSpawnBase(cx, cz, data) {
+    if (Math.random() > 0.0001) return; // 0.2% chance per chunk
+
+    const roomSize = 20;
+    const roomHeight = 10;
+    const baseY = 4
+
+    const centerX = Math.floor(CHUNK_SIZE / 2);
+    const centerZ = Math.floor(CHUNK_SIZE / 2);
+
+    const roomCount = 2 + Math.floor(Math.random() * 3); // 2-4 rooms
+
+    // ===== CENTRAL ROOM =====
+    carveBaseRoom(data, centerX, baseY, centerZ, roomSize, roomHeight, true);
+
+    // ===== SIDE ROOMS =====
+    const directions = [
+        [roomSize, 0],
+        [-roomSize, 0],
+        [0, roomSize],
+        [0, -roomSize]
+    ];
+
+    shuffleArray(directions);
+
+    for (let i = 0; i < roomCount - 1; i++) {
+        const [dx, dz] = directions[i];
+
+        const roomX = centerX + dx;
+        const roomZ = centerZ + dz;
+
+        carveBaseRoom(data, roomX, baseY, roomZ, roomSize, roomHeight, false);
+
+        carveTunnel(
+            data,
+            centerX,
+            baseY + 1,
+            centerZ,
+            roomX,
+            baseY + 1,
+            roomZ
+        );
+    }
+}
+function setBlockSafe(data, x, y, z, type) {
+    if (x < 0 || x >= CHUNK_SIZE || z < 0 || z >= CHUNK_SIZE) return;
+    if (y < 0 || y >= WORLD_HEIGHT) return;
+
+    data.set(`${x},${y},${z}`, type);
+}
+function carveBaseRoom(data, centerX, baseY, centerZ, size, height, isCentral) {
+    const half = Math.floor(size / 2);
+
+    for (let x = -half; x <= half; x++) {
+        for (let z = -half; z <= half; z++) {
+            for (let y = 0; y < height; y++) {
+                const wx = centerX + x;
+                const wy = baseY + y;
+                const wz = centerZ + z;
+
+                let block = BLOCKS.AIR;
+
+                const isWall =
+                    x === -half || x === half ||
+                    z === -half || z === half;
+
+                if (y === 0) block = BLOCKS.WOOD;          // floor
+                else if (y === height - 1) block = BLOCKS.DIAMOND; // roof
+                else if (isWall) block = BLOCKS.STONE;    // walls
+
+                setBlockSafe(data, wx, wy, wz, block);
+            }
+        }
+    }
+
+    if (isCentral) {
+        for (let x = -2; x <= 2; x++) {
+    for (let z = -2; z <= 2; z++) {
+        for (let y = 0; y <= 3; y++) {
+            const wx = centerX + x;
+            const wz = centerZ + z;
+            const wy = baseY + y;
+
+            const wall =
+                x === -2 || x === 2 ||
+                z === -2 || z === 2;
+
+            if (wall) {
+                setBlockSafe(data, wx, wy, wz, BLOCKS.STONE);
+            } else if (y === 0) {
+                setBlockSafe(data, wx, wy, wz, BLOCKS.WATER);
+            } else {
+                setBlockSafe(data, wx, wy, wz, BLOCKS.AIR);
+            }
+        }
+    }
+}
+    } else {
+        generateRandomPyramid(data, centerX, baseY, centerZ);
+    }
+}
+function generateRandomPyramid(data, centerX, baseY, centerZ) {
+    const usableBlocks = Object.values(BLOCKS).filter(
+        b => b !== BLOCKS.AIR
+    );
+
+    for (let level = 0; level < 5; level++) {
+        const radius = 4 - level;
+
+        for (let x = -radius; x <= radius; x++) {
+            for (let z = -radius; z <= radius; z++) {
+                const randomBlock =
+                    usableBlocks[Math.floor(Math.random() * usableBlocks.length)];
+
+                data.set(
+                    `${centerX + x},${baseY + level},${centerZ + z}`,
+                    randomBlock
+                );
+            }
+        }
+    }
+}
+function carveTunnel(data, x1, y1, z1, x2, y2, z2) {
+    let x = x1;
+    let z = z1;
+
+    while (x !== x2) {
+        x += Math.sign(x2 - x);
+
+        for (let y = y1; y <= y1 + 3; y++) {
+for (let w = -1; w <= 1; w++) {
+    data.set(`${x + w},${y},${z}`, BLOCKS.AIR);
+}
+        }
+    }
+
+    while (z !== z2) {
+        z += Math.sign(z2 - z);
+
+        for (let y = y1; y <= y1 + 3; y++) {
+            for (let w = -1; w <= 1; w++) {
+                data.set(`${x},${y},${z}`, BLOCKS.AIR);
+            }
+        }
+    }
+}
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
 
             // ===== TREE GENERATION =====
 const treeSeed = noise.perlin(wx * 0.7, 0, wz * 0.7);
