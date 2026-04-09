@@ -521,16 +521,16 @@ function maybeSpawnBase(cx, cz, data) {
 
     const roomCount = 2 + Math.floor(Math.random() * 3); // 2-4 rooms
 
-    // ===== CENTRAL ROOM =====
     carveBaseRoom(data, centerX, baseY, centerZ, roomSize, roomHeight, true);
 
-    // ===== SIDE ROOMS =====
-    const directions = [
-        [roomSize, 0],
-        [-roomSize, 0],
-        [0, roomSize],
-        [0, -roomSize]
-    ];
+	const ROOM_SPACING = roomSize + 12;
+
+	const directions = [
+    	[ROOM_SPACING, 0],
+    	[-ROOM_SPACING, 0],
+    	[0, ROOM_SPACING],
+    	[0, -ROOM_SPACING]
+	];
 
     shuffleArray(directions);
 
