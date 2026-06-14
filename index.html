@@ -339,6 +339,7 @@
                 SNOW: 8,
                 GOLD: 9,
                 DIAMOND: 10,
+                ICE: 11,
             };
             const COLORS = {
                 1: 0x3d6e32,
@@ -351,6 +352,7 @@
                 8: 0xffffff,
                 9: 0xffd700,
                 10: 0x00ffff,
+                11: 0xaadfff,
             };
 
             const SAVANNAH_GRASS = 0x8a7f32;
@@ -377,6 +379,13 @@
                         flatShading: true,
                     });
                 } else {
+                    materials[11] = new THREE.MeshPhongMaterial({
+                        color: 0xaadfff,
+                        transparent: true,
+                        opacity: 0.65,
+
+                        flatShading: true,
+                    });
                     materials[id] = new THREE.MeshLambertMaterial({
                         color: COLORS[id],
                     });
@@ -479,12 +488,6 @@
                     baseHeight += peakFactor * 1400; // main mountain height
                     baseHeight += mountainBase * 35; // big shapes
                     baseHeight += mountainDetail * 100; // roughness
-
-                    // ⛰️ cliff carving (THIS is what you were missing)
-                    //const cliff = noise.fbm(x * 0.01, z * 0.01, 2);
-                    //if (cliff > 0.55) {
-                    //baseHeight += Math.pow(cliff - 0.55, 3) * 120;
-                    //}
                 } else if (continental < -0.2) {
                     biome = "OCEAN";
                     baseHeight = SEA_LEVEL - 10;
@@ -521,6 +524,7 @@
                         maybeSpawnOres(cx, cz, data);
                         maybeSpawnWell(wx, wz, info, data);
                         maybeSpawnBase(cx, cz, data);
+                        maybeSpawnIcebergs(wx, wz, info, data);
 
                         // ===== HEIGHT LOOP =====
                         for (let y = 0; y < WORLD_HEIGHT; y++) {
@@ -746,8 +750,78 @@
                     }
                 });
             }
+            function maybeSpawnIcebergs(wx, wz, info, data) {
+                //if (info.temp !== "LOW") return;
+                //if (info.biome !=="OCEAN") return;
+
+                const seed = noise.perlin(wx * 0.2, 0, wz * 0.2);
+                if (seed < 0.6) return;
+
+                const height = 20 + Math.floor(Math.random() * 6);
+                const radius = 10 + Math.floor(Math.random() * 2);
+
+                for (let y = 0; y < height; y++) {
+                    const layerRadius = Math.max(1, radius - Math.floor(y / 2));
+
+                    for (let x = -layerRadius; x <= layerRadius; x++) {
+                        for (let z = -layerRadius; z <= layerRadius; z++) {
+                            if (Math.random() < 0.15) continue; // jagged edges
+
+                            if (x * x + z * z <= layerRadius * layerRadius) {
+                                const bx = Math.floor((wx % CHUNK_SIZE) + x);
+                                const bz = Math.floor((wz % CHUNK_SIZE) + z);
+                                const by = SEA_LEVEL + y;
+
+                                setBlockSafe(data, bx, by, bz, BLOCKS.ICE);
+                            }
+                        }
+                    }
+                }
+                for (let y = -1; y >= -4; y--) {
+                    const r = radius - 1;
+
+                    for (let x = -r; x <= r; x++) {
+                        for (let z = -r; z <= r; z++) {
+                            if (x * x + z * z <= r * r) {
+                                const bx = Math.floor((wx % CHUNK_SIZE) + x);
+                                const bz = Math.floor((wz % CHUNK_SIZE) + z);
+                                const by = SEA_LEVEL + y;
+
+                                setBlockSafe(data, bx, by, bz, BLOCKS.ICE);
+                            }
+                        }
+                    }
+                }
+                spawnIceSurface(wx, wz, data);
+            }
+            function spawnIceSurface(wx, wz, data) {
+                const patches = 1 + Math.floor(Math.random() * 6);
+
+                for (let i = 0; i < patches; i++) {
+                    const ox = Math.floor(Math.random() * 20 - 5);
+                    const oz = Math.floor(Math.random() * 20 - 5);
+
+                    const r = 10 + Math.floor(Math.random() * 2);
+
+                    for (let x = -r; x <= r; x++) {
+                        for (let z = -r; z <= r; z++) {
+                            if (x * x + z * z <= r * r) {
+                                const bx = Math.floor((wx % CHUNK_SIZE) + ox + x);
+                                const bz = Math.floor((wz % CHUNK_SIZE) + oz + z);
+                                const by = SEA_LEVEL;
+
+                                // only replace water surface
+                                const existing = data.get(`${bx},${by},${bz}`);
+                                if (existing === BLOCKS.WATER) {
+                                    data.set(`${bx},${by},${bz}`, BLOCKS.ICE);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             function maybeSpawnBase(cx, cz, data) {
-                if (Math.random() > 0.0001) return; // 0.2% chance per chunk
+                if (Math.random() > 0.0001) return;
 
                 const roomSize = 20;
                 const roomHeight = 10;
