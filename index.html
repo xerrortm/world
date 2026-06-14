@@ -751,8 +751,8 @@
                 });
             }
             function maybeSpawnIcebergs(wx, wz, info, data) {
-                //if (info.temp !== "LOW") return;
-                //if (info.biome !=="OCEAN") return;
+                if (info.temp !== "LOW") return;
+                if (info.biome !=="OCEAN") return;
 
                 const seed = noise.perlin(wx * 0.2, 0, wz * 0.2);
                 if (seed < 0.6) return;
