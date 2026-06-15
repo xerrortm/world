@@ -188,35 +188,6 @@
         </style>
     </head>
     <body>
-        <div id="loading">
-            <div class="background-image-container"></div>
-            <div class="background-overlay"></div>
-
-            <img src="logo.png" class="minecraft-logo-bg" />
-
-            <div
-                class="flex flex-col items-center justify-center p-8 bg-gray-800 bg-opacity-80 rounded-lg shadow-xl max-w-lg w-11/12 md:w-3/4 lg:w-1/2 minecraft-border relative z-10"
-            >
-                <!-- Main loading status text -->
-                <p
-                    id="loadingStatusText"
-                    class="text-lg md:text-xl text-gray-300 text-center minecraft-text-shadow mb-4 leading-relaxed"
-                ></p>
-
-                <!-- Progress bar container -->
-                <div class="w-full h-4 mb-6 progress-bar-container">
-                    <!-- Progress bar fill -->
-                    <div id="progressBarFill" class="progress-fill" style="width: 0%"></div>
-                </div>
-
-                <!-- Minecraft tips text -->
-                <p
-                    id="tipText"
-                    class="text-lg md:text-xl text-gray-300 text-center minecraft-text-shadow leading-relaxed"
-                ></p>
-            </div>
-        </div>
-
         <div id="ambient-overlay"></div>
         <div id="crosshair">+</div>
 
@@ -229,13 +200,18 @@
         </div>
 
         <div id="inventory">
-            <div class="slot active" data-type="1" style="background-color: #2d5a27">1</div>
-            <div class="slot" data-type="2" style="background-color: #777">2</div>
-            <div class="slot" data-type="3" style="background-color: #e3c07d">3</div>
-            <div class="slot" data-type="4" style="background-color: #4d3319">4</div>
-            <div class="slot" data-type="5" style="background-color: #1e3d1a">5</div>
+            <div class="slot active" data-type="1" style="background-color: #3d6e32">1</div>
+            <div class="slot" data-type="2" style="background-color: #777777">2</div>
+            <div class="slot" data-type="3" style="background-color: #fce166">3</div>
+            <div class="slot" data-type="4" style="background-color: #5d4037">4</div>
+            <div class="slot" data-type="5" style="background-color: #228b22">5</div>
+            <div class="slot" data-type="6" style="background-color: #8b4513">6</div>
+            <div class="slot" data-type="7" style="background-color: #1e90ff">7</div>
+            <div class="slot" data-type="8" style="background-color: #ffffff">8</div>
+            <div class="slot" data-type="9" style="background-color: #ffd700">9</div>
+            <div class="slot" data-type="10" style="background-color: #00ffff">10</div>
+            <div class="slot" data-type="11" style="background-color: #aadfff">11</div>
         </div>
-
         <script>
             //NOISE ENGINE
             class ImprovedNoise {
@@ -354,6 +330,24 @@
                 10: 0x00ffff,
                 11: 0xaadfff,
             };
+            let selectedSlot = 1;
+            function getSelectedBlock() {
+                const map = {
+                    1: BLOCKS.GRASS,
+                    2: BLOCKS.STONE,
+                    3: BLOCKS.SAND,
+                    4: BLOCKS.WOOD,
+                    5: BLOCKS.LEAVES,
+                    6: BLOCKS.DIRT,
+                    7: BLOCKS.WATER,
+                    8: BLOCKS.SNOW,
+                    9: BLOCKS.GOLD,
+                    10: BLOCKS.DIAMOND,
+                    11: BLOCKS.ICE,
+                };
+
+                return map[selectedSlot] ?? BLOCKS.GRASS;
+            }
 
             const SAVANNAH_GRASS = 0x8a7f32;
             const SAVANNAH_LEAVES = 0x6b6320;
@@ -752,7 +746,7 @@
             }
             function maybeSpawnIcebergs(wx, wz, info, data) {
                 if (info.temp !== "LOW") return;
-                if (info.biome !=="OCEAN") return;
+                if (info.biome !== "OCEAN") return;
 
                 const seed = noise.perlin(wx * 0.2, 0, wz * 0.2);
                 if (seed < 0.6) return;
@@ -1252,10 +1246,12 @@
                 if (intersections.length > 0) {
                     const hit = intersections[0];
                     if (hit.distance > 7) return;
-                    const pos = hit.point.clone().add(hit.face.normal.clone().multiplyScalar(-0.5));
-                    const bx = Math.floor(pos.x),
-                        by = Math.floor(pos.y),
-                        bz = Math.floor(pos.z);
+                    const hitPos = hit.point
+                        .clone()
+                        .addScaledVector(camera.getWorldDirection(new THREE.Vector3()), -0.01);
+                    const bx = Math.floor(hitPos.x);
+                    const by = Math.floor(hitPos.y);
+                    const bz = Math.floor(hitPos.z);
                     const cx = Math.floor(bx / CHUNK_SIZE),
                         cz = Math.floor(bz / CHUNK_SIZE);
                     const lx = ((bx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
@@ -1267,7 +1263,65 @@
                     }
                 }
             });
+            window.addEventListener("mousedown", (e) => {
+                if (e.button !== 2) return;
 
+                raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+                const intersections = raycaster.intersectObjects(Array.from(activeChunks.values()), true);
+
+                if (intersections.length > 0) {
+                    const hit = intersections[0];
+                    if (hit.distance > 7) return;
+
+                    const normal = hit.face.normal.clone();
+
+                    const hitPos = hit.point
+                        .clone()
+                        .addScaledVector(camera.getWorldDirection(new THREE.Vector3()), -0.01);
+
+                    const bx = Math.floor(hitPos.x);
+                    const by = Math.floor(hitPos.y);
+                    const bz = Math.floor(hitPos.z);
+
+                    // 👉 place on the face we clicked
+                    const px = bx + normal.x;
+                    const py = by + normal.y;
+                    const pz = bz + normal.z;
+
+                    const cx = Math.floor(px / CHUNK_SIZE);
+                    const cz = Math.floor(pz / CHUNK_SIZE);
+
+                    const lx = ((px % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+                    const lz = ((pz % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+
+                    const data = chunkData.get(`${cx},${cz}`);
+                    if (!data) return;
+
+                    const selectedBlock = getSelectedBlock();
+
+                    data.set(`${lx},${Math.floor(py)},${lz}`, selectedBlock);
+                    renderChunk(cx, cz);
+                }
+            });
+            document.querySelectorAll(".slot").forEach((slot) => {
+                slot.addEventListener("click", () => {
+                    document.querySelectorAll(".slot").forEach((s) => s.classList.remove("active"));
+                    slot.classList.add("active");
+                    selectedSlot = Number(slot.dataset.type);
+                });
+            });
+            window.addEventListener("keydown", (e) => {
+                if (e.code.startsWith("Digit")) {
+                    const num = Number(e.code.replace("Digit", ""));
+                    if (num >= 1 && num <= 5) {
+                        selectedSlot = num;
+
+                        document.querySelectorAll(".slot").forEach((s) => {
+                            s.classList.toggle("active", Number(s.dataset.type) === num);
+                        });
+                    }
+                }
+            });
             window.addEventListener("keydown", (e) => (keys[e.code] = true));
             window.addEventListener("keyup", (e) => (keys[e.code] = false));
 
@@ -1284,7 +1338,6 @@
                 timeDisplay = document.getElementById("time-display");
                 tempDisplay = document.getElementById("temp-display");
                 ambientOverlay = document.getElementById("ambient-overlay");
-                document.getElementById("loading").style.display = "none";
                 animate();
             };
 
