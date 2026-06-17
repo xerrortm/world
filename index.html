@@ -297,7 +297,7 @@
             // --- CONSTANTS ---
             const CHUNK_SIZE = 20;
             const VIEW_DISTANCE = 2;
-            const WORLD_HEIGHT = 128;
+            const WORLD_HEIGHT = 120;
             const SEA_LEVEL = 18;
             const noise = new ImprovedNoise();
             const chunkQueue = [];
@@ -473,14 +473,21 @@
                 if (continental > 0.2) {
                     biome = "MOUNTAINS";
 
-                    const mountainBase = noise.fbm(x * 0.02, z * 0.002, 4);
-                    const mountainDetail = noise.fbm(x * 0.02, z * 0.02, 2);
+                    const foothills = Math.max(0, continental);
+                    const roughness = noise.fbm(x * 0.0015 + 999, z * 0.0015 + 999, 2);
 
-                    const peakFactor = Math.pow(continental / 0.55, 22.2);
+                    const mountainBase = noise.fbm(x * 0.004, z * 0.004, 5);
+                    const mountainDetail = noise.fbm(x * 0.03, z * 0.03, 4);
+                    const ridges = Math.abs(noise.fbm(x * 0.06, z * 0.06, 3));
 
-                    baseHeight += peakFactor * 1400; // main mountain height
-                    baseHeight += mountainBase * 35; // big shapes
-                    baseHeight += mountainDetail * 100; // roughness
+                    baseHeight += foothills * 1;
+                    baseHeight += mountainBase;
+                    baseHeight += mountainDetail * 40;
+                    baseHeight += ridges * (20 + roughness * 100);
+
+                    const peakFactor = Math.pow(Math.max(0, (continental - 0.15) / 0.4), 2.0);
+
+                    baseHeight += peakFactor * 300;
                 } else if (continental < -0.2) {
                     biome = "OCEAN";
                     baseHeight = SEA_LEVEL - 10;
@@ -526,7 +533,7 @@
                                 let type;
 
                                 if (y === info.height) {
-                                    if (info.biome === "MOUNTAINS" && y > 50) type = BLOCKS.SNOW;
+                                    if (info.biome === "MOUNTAINS" && y > 70) type = BLOCKS.SNOW;
                                     else if (info.biome === "BEACH" || info.biome === "OCEAN") type = BLOCKS.SAND;
                                     else type = BLOCKS.GRASS;
                                 } else if (y > info.height - 3) {
