@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Infinite Forest</title>
+        <title>[🏔️]Infinite Forest</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
         <link href="https://fonts.cdnfonts.com/css/minecraftia" rel="stylesheet" />
         <style>
@@ -470,24 +470,24 @@
                 else if (tempValue < -0.15) tempCat = "LOW";
 
                 // MOUNTAINS
-                if (continental > 0.2) {
+                if (continental > 0.05) {
                     biome = "MOUNTAINS";
-
                     const foothills = Math.max(0, continental);
-                    const roughness = noise.fbm(x * 0.0015 + 999, z * 0.0015 + 999, 2);
 
+                    const roughness = noise.fbm(x * 0.0015 + 999, z * 0.0015 + 999, 2);
                     const mountainBase = noise.fbm(x * 0.004, z * 0.004, 5);
                     const mountainDetail = noise.fbm(x * 0.03, z * 0.03, 4);
                     const ridges = Math.abs(noise.fbm(x * 0.06, z * 0.06, 3));
+                    const smoothness = (roughness + 1) * 0.5;
+                    const detailBlend = 0.3 + (1 - smoothness) * 0.7;
 
-                    baseHeight += foothills * 1;
-                    baseHeight += mountainBase;
-                    baseHeight += mountainDetail * 40;
-                    baseHeight += ridges * (20 + roughness * 100);
-
+                    baseHeight += foothills * 50;
+                    baseHeight += mountainBase * 60;
+                    baseHeight += mountainDetail * 40 * detailBlend;
+                    baseHeight += ridges * (20 + roughness * 80) * (1 - smoothness);
                     const peakFactor = Math.pow(Math.max(0, (continental - 0.15) / 0.4), 2.0);
-
                     baseHeight += peakFactor * 300;
+                    baseHeight = Math.min(baseHeight, 120);
                 } else if (continental < -0.2) {
                     biome = "OCEAN";
                     baseHeight = SEA_LEVEL - 10;
@@ -537,7 +537,7 @@
                                     else if (info.biome === "BEACH" || info.biome === "OCEAN") type = BLOCKS.SAND;
                                     else type = BLOCKS.GRASS;
                                 } else if (y > info.height - 3) {
-                                    if (info.biome === "MOUNTAINS" && y > 40) type = BLOCKS.STONE;
+                                    if (info.biome === "MOUNTAINS" && y > 65) type = BLOCKS.STONE;
                                     else
                                         type =
                                             info.biome === "BEACH" || info.biome === "OCEAN"
