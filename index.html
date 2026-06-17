@@ -1235,7 +1235,6 @@
                     posDisplay.innerText = `X: ${Math.round(player.pos.x)}, Y: ${Math.round(player.pos.y)}, Z: ${Math.round(player.pos.z)}`;
             }
 
-            // --- HANDLERS ---
             const raycaster = new THREE.Raycaster();
             window.addEventListener("mousedown", (e) => {
                 if (e.button !== 0) return;
@@ -1281,7 +1280,6 @@
                     const by = Math.floor(hitPos.y);
                     const bz = Math.floor(hitPos.z);
 
-                    // 👉 place on the face we clicked
                     const px = bx + normal.x;
                     const py = by + normal.y;
                     const pz = bz + normal.z;
@@ -1342,6 +1340,9 @@
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            document.getElementById("inventory").addEventListener("mousedown", (e) => {
+                e.stopPropagation();
             });
             document.addEventListener("contextmenu", (e) => e.preventDefault());
         </script>
