@@ -209,11 +209,11 @@
             <div class="slot" data-type="7" style="background-color: #1e90ff">7</div>
             <div class="slot" data-type="8" style="background-color: #ffffff">8</div>
             <div class="slot" data-type="9" style="background-color: #ffd700">9</div>
-            <div class="slot" data-type="10" style="background-color: #00ffff">10</div>
-            <div class="slot" data-type="11" style="background-color: #aadfff">11</div>
+            <div class="slot" data-type="0" style="background-color: #00ffff">10</div>
+            <div class="slot" data-type="10" style="background-color: #aadfff">11</div>
         </div>
         <script>
-            //NOISE ENGINE
+            // --- NOISE ENGINE ---
             class ImprovedNoise {
                 constructor() {
                     this.p = new Uint8Array(256);
@@ -342,7 +342,7 @@
                     7: BLOCKS.WATER,
                     8: BLOCKS.SNOW,
                     9: BLOCKS.GOLD,
-                    10: BLOCKS.DIAMOND,
+                    0: BLOCKS.DIAMOND,
                     11: BLOCKS.ICE,
                 };
 
@@ -430,7 +430,6 @@
             const stars = new THREE.Points(starGeometry, starMaterial);
             scene.add(stars);
 
-            // Scene fog for distance-based fading
             scene.fog = new THREE.Fog(0x87ceeb, 0, 120); // start=0, end=120 blocks
 
             // --- PLAYER & WORLD STATE ---
@@ -470,7 +469,7 @@
                 if (tempValue > 0.25) tempCat = "HIGH";
                 else if (tempValue < -0.15) tempCat = "LOW";
 
-                // 🌄 MOUNTAINS (RESTORED + STRONGER)
+                // MOUNTAINS
                 if (continental > 0.2) {
                     biome = "MOUNTAINS";
 
@@ -635,14 +634,14 @@
                                 }
                             }
                         }
-                    } // ===== END Z LOOP =====
-                } // ===== END X LOOP =====
+                    } // ===== Z LOOP =====
+                } // ===== X LOOP =====
                 yield;
                 chunkData.set(key, data);
                 if (Math.random() < 0.25) {
                     spawnMob(cx * CHUNK_SIZE + 8, cz * CHUNK_SIZE + 8);
                 }
-            } // ===== END FUNCTION =====
+            }
             function maybeSpawnWell(wx, wz, info, data) {
                 if (info.temp === "LOW") return;
                 if (info.biome === "OCEAN" || info.biome === "BEACH") return;
@@ -684,11 +683,10 @@
                     let startX = Math.floor(Math.random() * CHUNK_SIZE);
                     let startZ = Math.floor(Math.random() * CHUNK_SIZE);
 
-                    // START VERY LOW UNDERGROUND (like 5-20 blocks above bottom)
                     let startY = SEA_LEVEL - 20;
 
-                    const caveLength = 20 + Math.floor(Math.random() * 30); // shorter tunnels
-                    const caveRadius = 1 + Math.random() * 1.1; // smaller radius
+                    const caveLength = 20 + Math.floor(Math.random() * 30);
+                    const caveRadius = 1 + Math.random() * 1.1;
 
                     carveCave(data, startX, startY, startZ, caveLength, caveRadius);
                 }
@@ -1313,9 +1311,8 @@
             window.addEventListener("keydown", (e) => {
                 if (e.code.startsWith("Digit")) {
                     const num = Number(e.code.replace("Digit", ""));
-                    if (num >= 1 && num <= 5) {
+                    if (num >= 0 && num <= 9) {
                         selectedSlot = num;
-
                         document.querySelectorAll(".slot").forEach((s) => {
                             s.classList.toggle("active", Number(s.dataset.type) === num);
                         });
