@@ -470,25 +470,39 @@
                 else if (tempValue < -0.15) tempCat = "LOW";
 
                 // MOUNTAINS
-                if (continental > 0.1) {
-                    biome = "MOUNTAINS";
-                    const foothills = Math.max(0, continental);
+                if (continental > 0.15) {
+    biome = "MOUNTAINS";
 
-                    const roughness = noise.fbm(x * 0.0015 + 999, z * 0.0015 + 999, 2);
-                    const mountainBase = noise.fbm(x * 0.004, z * 0.004, 5);
-                    const mountainDetail = noise.fbm(x * 0.03, z * 0.03, 4);
-                    const ridges = Math.abs(noise.fbm(x * 0.06, z * 0.06, 3));
-                    const smoothness = (roughness + 1) * 0.5;
-                    const detailBlend = 0.3 + (1 - smoothness) * 0.7;
+    // strength = how “mountain” this point is
+    const mountainStrength = Math.min(
+        1,
+        Math.max(0, (continental - 0.15) / 0.25)
+    );
 
-                    baseHeight += foothills * 50;
-                    baseHeight += mountainBase * 60;
-                    baseHeight += mountainDetail * 40 * detailBlend;
-                    baseHeight += ridges * (20 + roughness * 80) * (1 - smoothness);
-                    const peakFactor = Math.pow(Math.max(0, (continental - 0.15) / 0.4), 2.0);
-                    baseHeight += peakFactor * 300;
-                    baseHeight = Math.min(baseHeight, 120);
-                } else if (continental < -0.2) {
+    const foothillStrength = mountainStrength; // same fade cur
+
+    const roughness = noise.fbm(x * 0.0015 + 999, z * 0.0015 + 999, 2);
+    const mountainBase = noise.fbm(x * 0.004, z * 0.004, 5);
+    const mountainDetail = noise.fbm(x * 0.03, z * 0.03, 4);
+    const ridges = Math.abs(noise.fbm(x * 0.06, z * 0.06, 3));
+
+    const smoothness = (roughness + 1) * 0.5;
+    const detailBlend = 0.3 + (1 - smoothness) * 0.7;
+
+    // base terrain still exists everywhere
+    const baseTerrain = continental * 35 + 25;
+
+    // mountain contribution fades out BEFORE border
+    baseHeight =
+        baseTerrain +
+        foothillStrength * 15 + // tiny support only (prevents cliff cut)
+        mountainBase * 60 * mountainStrength +
+        mountainDetail * 40 * detailBlend * mountainStrength +
+        ridges * (20 + roughness * 80) * (1 - smoothness) * mountainStrength +
+        Math.pow(Math.max(0, (continental - 0.15) / 0.4), 2) * 300 * mountainStrength;
+
+    baseHeight = Math.min(baseHeight, 115);
+} else if (continental < -0.2) {
                     biome = "OCEAN";
                     baseHeight = SEA_LEVEL - 10;
                 } else if (continental < -0.05) {
