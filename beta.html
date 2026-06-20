@@ -659,7 +659,7 @@
                 } // ===== X LOOP =====
                 yield;
                 chunkData.set(key, data);
-                if (Math.random() < 0.7) {
+                if (Math.random() < 0.9) {
                     spawnMob(cx * CHUNK_SIZE + 8, cz * CHUNK_SIZE + 8);
                 }
             }
@@ -1033,49 +1033,47 @@
                             const leaf = stepFindNearbyLeaves(bird);
                             if (leaf) {
                                 bird.sleepTarget = leaf;
-                                // store a fixed perch point ABOVE leaf (not inside it)
-                                bird.sleepPoint = new THREE.Vector3(leaf.x, leaf.y + 1.2, leaf.z);
+                                bird.sleepPoint = new THREE.Vector3(leaf.x, leaf.y, leaf.z);
                                 bird.sleeping = true;
                             }
                         }
-                        // steer toward sleep point (NO teleport pulling)
                         if (bird.sleeping && bird.sleepPoint) {
                             const dx = bird.sleepPoint.x - bird.pos.x;
-                            const dy = bird.sleepPoint.y - bird.pos.y;
                             const dz = bird.sleepPoint.z - bird.pos.z;
-                            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                            const desired = new THREE.Vector3(dx, 0, dz).normalize();
-                            // smooth steering
-                            bird.targetDir.lerp(desired, 0.05);
-                            const speed = bird.speed;
-                            const toTarget = new THREE.Vector3(
-                                bird.sleepPoint.x - bird.pos.x,
-                                bird.sleepPoint.y - bird.pos.y,
-                                bird.sleepPoint.z - bird.pos.z
-                            );
-                            // normalize direction (TRUE 3D flight vector)
-                            toTarget.normalize();
-                            // keep full flight speed (no fake vertical lag)
-                            const landingSpeed = bird.speed * Math.min(1, dist / 8);
-                            // move in ONE diagonal line
-                            bird.pos.addScaledVector(toTarget, landingSpeed);
-                            if (dist < 1.5) {
+                            const dist = Math.hypot(dx, dz);
+
+                            bird.targetDir.set(dx, 0, dz).normalize();
+
+                            bird.targetAltitude = bird.sleepPoint.y;
+
+                            if (dist < 1 && Math.abs(bird.pos.y - bird.sleepPoint.y) < 1) {
                                 bird.landed = true;
-                                bird.dir.lerp(new THREE.Vector3(0, 0, 0), 0.2);
+                                bird.pos.copy(bird.sleepPoint);
+                                bird.mesh.position.copy(bird.pos);
+
+                                bird.leftWing.rotation.z = 0;
+                                bird.rightWing.rotation.z = 0;
+                                return;
                             }
-                            bird.mesh.position.copy(bird.pos);
-                            const flap = Math.sin(time * bird.flapSpeed) * 0.8;
-                            bird.leftWing.rotation.z = flap;
-                            bird.rightWing.rotation.z = -flap;
-                            return;
                         }
                     }
-                    // 2. WAKE UP IN MORNING
-                    if (!isNight && bird.sleeping) {
+                    // WAKE UP
+                    if (!isNight && (bird.sleeping || bird.landed)) {
                         bird.sleeping = false;
+                        bird.landed = false;
                         bird.sleepTarget = null;
                         bird.sleepPoint = null;
-                        bird.landed = false;
+
+                        // give it somewhere to fly
+                        const angle = Math.random() * Math.PI * 2;
+                        bird.dir.set(Math.cos(angle), 0, Math.sin(angle));
+                        bird.targetDir.copy(bird.dir);
+
+                        bird.targetAltitude = 20 + Math.random() * 60;
+                    }
+                    if (bird.landed) {
+                        bird.mesh.position.copy(bird.pos);
+                        return;
                     }
                     // 3. NORMAL FLIGHT AI
                     bird.turnTimer--;
