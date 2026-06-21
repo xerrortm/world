@@ -143,30 +143,46 @@
                 inset: 0;
                 background: rgba(0, 0, 0, 0.4);
             }
-            #title-content {
+            #main-menu,
+            #credits-screen {
                 position: relative;
                 z-index: 2;
                 text-align: center;
                 color: white;
             }
-            #title-content h1 {
+            #main-menu h1 {
                 font-size: 70px;
                 margin-bottom: 30px;
                 text-shadow:
                     4px 4px 0 black,
                     0 0 20px black;
             }
-            #play-btn {
+            #main-menu button {
                 font-family: "Minecraftia", sans-serif;
                 font-size: 22px;
-                padding: 20px 50px;
+                padding: 20px;
                 border: 3px solid white;
                 background: rgba(0, 0, 0, 0.7);
                 color: white;
                 cursor: pointer;
                 transition: 0.2s;
+                width: 200px;
             }
-            #play-btn:hover {
+            #credits-screen button {
+                font-family: "Minecraftia", sans-serif;
+                font-size: 22px;
+                padding: 20px;
+                border: 3px solid white;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                cursor: pointer;
+                transition: 0.2s;
+                width: 200px;
+            }
+            #main-menu button:hover {
+                transform: scale(1.08);
+            }
+            #credits-screen button:hover {
                 transform: scale(1.08);
             }
         </style>
@@ -174,9 +190,23 @@
     <body>
         <div id="title-screen">
             <div id="title-overlay"></div>
-            <div id="title-content">
+            <div id="main-menu">
                 <h1>INFINITE FOREST</h1>
                 <button id="play-btn">PLAY</button>
+                <br /><br />
+                <button id="credits-btn">CREDITS</button>
+            </div>
+            <div id="credits-screen" style="display: none">
+                <h1>CREDITS</h1>
+                <h2>CREATOR</h2>
+                <p>xerrortm</p>
+                <br />
+                <h2>MUSIC</h2>
+                <p>'Reverie' by Scott Buckley</p>
+                <p>Released under CC-BY 4.0</p>
+                <p>www.scottbuckley.com.au</p>
+                <br />
+                <button id="back-btn">BACK</button>
             </div>
         </div>
         <audio id="menu-music" loop>
@@ -1447,13 +1477,9 @@
                 timeDisplay = document.getElementById("time-display");
                 tempDisplay = document.getElementById("temp-display");
                 ambientOverlay = document.getElementById("ambient-overlay");
-                const backgroundImages = [
-                    "assets/thumbnail1.png",
-                    "assets/thumbnail2.png",
-                ];
-                const randomImage = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
-                document.getElementById("title-screen").style.backgroundImage = `url(${randomImage})`;
-                const bgMusic = new Audio("https://res.cloudinary.com/drqkilrfl/video/upload/v1781078642/Lilypad_a4imiu.mp3");
+                const bgMusic = new Audio(
+                    "https://res.cloudinary.com/drqkilrfl/video/upload/v1781078642/Lilypad_a4imiu.mp3"
+                );
                 bgMusic.loop = true;
                 bgMusic.volume = 0;
                 document.getElementById("play-btn").addEventListener("click", async () => {
@@ -1607,6 +1633,16 @@
                 e.stopPropagation();
             });
             document.addEventListener("contextmenu", (e) => e.preventDefault());
+            const mainMenu = document.getElementById("main-menu");
+            const creditsScreen = document.getElementById("credits-screen");
+            document.getElementById("credits-btn").onclick = () => {
+                mainMenu.style.display = "none";
+                creditsScreen.style.display = "block";
+            };
+            document.getElementById("back-btn").onclick = () => {
+                creditsScreen.style.display = "none";
+                mainMenu.style.display = "block";
+            };
         </script>
     </body>
 </html>
