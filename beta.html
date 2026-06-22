@@ -1477,6 +1477,12 @@
                 timeDisplay = document.getElementById("time-display");
                 tempDisplay = document.getElementById("temp-display");
                 ambientOverlay = document.getElementById("ambient-overlay");
+                const backgroundImages = [
+                    "assets/thumbnail1.png",
+                    "assets/thumbnail2.png",
+                ];
+                const randomImage = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];aZ
+                document.getElementById("title-screen").style.backgroundImage = `url(${randomImage})`;
                 const bgMusic = new Audio(
                     "https://res.cloudinary.com/drqkilrfl/video/upload/v1781078642/Lilypad_a4imiu.mp3"
                 );
@@ -1643,12 +1649,6 @@
                 creditsScreen.style.display = "none";
                 mainMenu.style.display = "block";
             };
-            const backgroundImages = [
-                "assets/thumbnail1.png",
-                "assets/thumbnail2.png",
-            ];
-            const randomImage = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];aZ
-            document.getElementById("title-screen").style.backgroundImage = `url(${randomImage})`;
         </script>
     </body>
 </html>
