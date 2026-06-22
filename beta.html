@@ -1479,7 +1479,6 @@
                 ambientOverlay = document.getElementById("ambient-overlay");
                 const backgroundImages = [
                     "assets/thumbnail1.png",
-                    "assets/thumbnail2.png",
                 ];
                 const randomImage = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
                 document.getElementById("title-screen").style.backgroundImage = `url(${randomImage})`;
@@ -1490,7 +1489,7 @@
                 bgMusic.volume = 0;
                 document.getElementById("play-btn").addEventListener("click", async () => {
                     await bgMusic.play();
-                    let targetVolume = 0.05;
+                    let targetVolume = 0.4;
                     let fadeDuration = 500;
                     let steps = 600;
                     let stepVolume = targetVolume / steps;
